@@ -1,0 +1,247 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import (
+    LSTM,
+    Dense,
+    RepeatVector,
+    TimeDistributed
+)
+
+from sklearn.model_selection import train_test_split
+
+# =====================================================
+# 1. 데이터 불러오기
+# =====================================================
+
+X = np.load('X_lstm.npy')
+y = np.load('y_lstm.npy')
+
+print("데이터 shape :", X.shape)
+print("라벨 shape :", y.shape)
+
+# =====================================================
+# 2. train / test 분리
+# =====================================================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# =====================================================
+# 3. LSTM 기반 낙상 분류 모델
+# =====================================================
+
+lstm_model = Sequential([
+
+    LSTM(
+        64,
+        input_shape=(30, 66)
+    ),
+
+    Dense(
+        32,
+        activation='relu'
+    ),
+
+    Dense(
+        1,
+        activation='sigmoid'
+    )
+])
+
+# =====================================================
+# 4. 모델 컴파일
+# =====================================================
+
+lstm_model.compile(
+    loss='binary_crossentropy',
+    optimizer='adam',
+    metrics=['accuracy']
+)
+
+# =====================================================
+# 5. 모델 학습
+# =====================================================
+
+history = lstm_model.fit(
+    X_train,
+    y_train,
+    epochs=10,
+    batch_size=16
+)
+
+# =====================================================
+# 6. 모델 평가
+# =====================================================
+
+loss, acc = lstm_model.evaluate(
+    X_test,
+    y_test
+)
+
+print("테스트 정확도 :", acc)
+
+# =====================================================
+# 7. Accuracy 그래프
+# =====================================================
+
+plt.plot(history.history['accuracy'])
+
+plt.title('LSTM Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+
+plt.show()
+
+# =====================================================
+# 8. Loss 그래프
+# =====================================================
+
+plt.plot(history.history['loss'])
+
+plt.title('LSTM Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+
+plt.show()
+
+# =====================================================
+# 9. 정상 데이터만 추출
+# =====================================================
+
+X_normal = X[y == 0]
+
+# =====================================================
+# 10. Autoencoder 모델 생성
+# =====================================================
+
+autoencoder = Sequential([
+
+    LSTM(
+        64,
+        activation='relu',
+        input_shape=(30, 66),
+        return_sequences=False
+    ),
+
+    RepeatVector(30),
+
+    LSTM(
+        64,
+        activation='relu',
+        return_sequences=True
+    ),
+
+    TimeDistributed(
+        Dense(66)
+    )
+])
+
+# =====================================================
+# 11. Autoencoder 컴파일
+# =====================================================
+
+autoencoder.compile(
+    optimizer='adam',
+    loss='mse'
+)
+
+# =====================================================
+# 12. Autoencoder 학습
+# =====================================================
+
+autoencoder.fit(
+    X_normal,
+    X_normal,
+    epochs=10,
+    batch_size=16
+)
+
+# =====================================================
+# 13. 예측값 생성
+# =====================================================
+
+X_pred = autoencoder.predict(X_test)
+
+# =====================================================
+# 14. Reconstruction Error 계산
+# =====================================================
+
+mse = np.mean(
+    np.power(X_test - X_pred, 2),
+    axis=(1,2)
+)
+
+# =====================================================
+# 15. Threshold 설정
+# =====================================================
+
+threshold = np.mean(mse) + 2 * np.std(mse)
+
+print("Threshold :", threshold)
+
+# =====================================================
+# 16. Autoencoder 이상 감지 그래프
+# =====================================================
+
+plt.plot(mse)
+
+plt.axhline(
+    y=threshold,
+    color='r',
+    linestyle='--'
+)
+
+plt.title('Reconstruction Error')
+plt.xlabel('Sample')
+plt.ylabel('MSE')
+
+plt.show()
+
+# =====================================================
+# 17. 이상 행동 여부 판단
+# =====================================================
+
+anomaly = mse > threshold
+
+# =====================================================
+# 18. LSTM 예측
+# =====================================================
+
+y_pred = lstm_model.predict(X_test)
+
+y_pred = (
+    y_pred > 0.5
+).astype(int)
+
+# =====================================================
+# 19. 최종 결과 판단
+# =====================================================
+
+final_result = []
+
+for i in range(len(X_test)):
+
+    if anomaly[i] and y_pred[i] == 1:
+        final_result.append("낙상")
+
+    elif anomaly[i]:
+        final_result.append("위험 행동")
+
+    else:
+        final_result.append("정상")
+
+# =====================================================
+# 20. 결과 출력
+# =====================================================
+
+for i in range(20):
+
+    print(
+        f"{i+1}번째 결과 : {final_result[i]}"
+    )

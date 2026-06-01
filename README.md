@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI 기반 예방형 낙상 감지 시스템
 
 ## 프로젝트 소개
@@ -19,3 +20,6 @@ LSTM 및 Autoencoder 기반 딥러닝 모델을 활용하여
 
 - Visual Studio Code
 - Google Colab
+=======
+# Project
+>>>>>>> 7d0b1da1ca674a5256616ec2c7b492ab0454cafd
