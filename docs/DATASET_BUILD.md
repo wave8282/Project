@@ -110,3 +110,47 @@ recommended.
 The script has not been run against the project's real videos or real pose
 dataset yet. Do not report model performance until extraction, label review,
 and training have actually completed.
+
+## 6. Scale up with external datasets
+
+Use the licensing-aware source guide in [EXTERNAL_DATASETS.md](EXTERNAL_DATASETS.md).
+For URFD, convert downloaded cam0 RGB ZIP archives with
+`src/preprocessing/prepare_urfd.py`. For other sources, prepare local video
+files and register each independently reviewed clip in
+`data/external/manifest_template.csv`.
+
+Run the manifest importer:
+
+```bash
+python src/preprocessing/build_dataset_from_manifest.py \
+  --manifest "data/external/my_manifest.csv" \
+  --output "data/processed/pose_sequences.npz"
+```
+
+## 7. Engineer camera-robust temporal features
+
+The feature transformer uses hip-centered coordinates normalized by torso
+scale, first differences, and global center/scale/torso-angle descriptors.
+It converts each 30 x 66 sequence to 30 x 137 features. The same deterministic
+function is used by training and real-time inference.
+
+```bash
+python src/preprocessing/engineer_features.py \
+  --input "data/processed/pose_sequences.npz" \
+  --output "data/processed/pose_features.npz"
+```
+
+## 8. Run the training workflow
+
+The GitHub Actions workflow named **Train fall detector** is manual. It builds
+features, runs tests, trains the LSTM classifier and normal-only LSTM
+Autoencoder, calibrates the reconstruction threshold on normal validation
+videos, and uploads model/evaluation artifacts. It intentionally fails early
+when there are fewer than three independent videos per class.
+
+## 9. Run real-time or file-based inference
+
+After downloading the trained model artifact and placing it under
+`artifacts/fall_detector`, follow [REALTIME_INFERENCE.md](REALTIME_INFERENCE.md).
+The detector is an experimental research prototype and must not be used as
+the sole safety monitor.
