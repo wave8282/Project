@@ -1,0 +1,39 @@
+{
+  "output": "data/processed/pose_sequences.npz",
+  "X_shape": [
+    1006,
+    30,
+    66
+  ],
+  "y_shape": [
+    1006
+  ],
+  "class_sequence_counts": {
+    "normal_0": 509,
+    "fall_1": 497
+  },
+  "source_video_counts": {
+    "normal_videos": 1,
+    "fall_videos": 1
+  },
+  "groups_saved_for_video_level_split": true,
+  "reports": [
+    {
+      "source_id": "0:test_normal_pose",
+      "csv": "data/raw/normal/test_normal_pose.csv",
+      "label": 0,
+      "detected_pose_frames": 597,
+      "sequence_windows": 509,
+      "sequence_length": 30
+    },
+    {
+      "source_id": "1:fall_pose",
+      "csv": "data/raw/fall/fall_pose.csv",
+      "label": 1,
+      "detected_pose_frames": 577,
+      "sequence_windows": 497,
+      "sequence_length": 30
+    }
+  ],
+  "warning": "Do not randomly split overlapping windows. Split by source video using the saved groups. At least two independent source videos per class are needed for a meaningful video-level train/test evaluation."
+}

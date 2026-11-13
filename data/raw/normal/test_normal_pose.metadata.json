@@ -1,0 +1,19 @@
+{
+  "source_video": "test.mp4..mp4",
+  "output_csv": "data/raw/normal/test_normal_pose.csv",
+  "fps": 59.94005994005994,
+  "expected_frames": 600,
+  "processed_frames": 600,
+  "detected_pose_frames": 597,
+  "pose_detection_rate": 0.995,
+  "width": 3840,
+  "height": 2160,
+  "landmarks_per_frame": 33,
+  "coordinates_per_frame": 66,
+  "frame_index_preserved": true,
+  "max_inference_width": 1280,
+  "resized_frames": 600,
+  "model_complexity": 1,
+  "min_detection_confidence": 0.5,
+  "min_tracking_confidence": 0.5
+}
