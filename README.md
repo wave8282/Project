@@ -51,3 +51,12 @@ MediaPipe Pose로 영상 속 인체 관절 좌표를 추출하고, 시계열 딥
 - Install model dependencies with `python -m pip install -r requirements-train.txt`.
 - Train/evaluate the leakage-safe hybrid model with `python src/training/train_hybrid.py` after reviewing the generated NPZ dataset.
 - See [verified pose extraction results](docs/EXTRACTION_RESULTS.md) for actual detection rates, continuity checks, and dataset counts.
+
+### External data, engineered features, training and inference
+
+- Public dataset sources and licence notes: [docs/EXTERNAL_DATASETS.md](docs/EXTERNAL_DATASETS.md).
+- Convert downloaded URFD cam0 RGB ZIP archives: `python src/preprocessing/prepare_urfd.py --source-dir data/external/urfd/downloads --fps <verified_fps>`.
+- Prepare a reviewed multi-video CSV manifest using [data/external/manifest_template.csv](data/external/manifest_template.csv), then run `python src/preprocessing/build_dataset_from_manifest.py --manifest data/external/my_manifest.csv`.
+- Generate body-relative temporal features: `python src/preprocessing/engineer_features.py`.
+- Train/evaluate by source video with the manual GitHub Actions workflow **Train fall detector** or `python src/training/train_hybrid.py`.
+- Experimental camera/video inference: [docs/REALTIME_INFERENCE.md](docs/REALTIME_INFERENCE.md).
