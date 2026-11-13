@@ -63,8 +63,8 @@ def inspect_csv(path: Path) -> dict:
         "non_finite_values": non_finite,
         "out_of_range_0_1": out_of_range,
         "duplicate_rows": duplicate_rows,
-        "min": None if minimum is math.inf else minimum,
-        "max": None if maximum is -math.inf else maximum,
+        "min": None if math.isinf(minimum) else minimum,
+        "max": None if math.isinf(maximum) else maximum,
         "sha256": digest.hexdigest(),
     }
 
