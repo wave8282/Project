@@ -4,7 +4,7 @@
 
 This audit uses the repository files on branch `audit/fall-pipeline-review` and the user's confirmation that `test.mp4..mp4` is the normal-behavior video.
 
-The video itself has not yet been decoded in this audit environment. Therefore, its visual content, duration, frame rate, and frame count are not independently verified here.
+A later OpenCV check successfully decoded all 600 frames of `test.mp4..mp4`. The file reports 3840 x 2160 resolution, approximately 59.94 FPS, and approximately 10.01 seconds duration. This confirms that the file is readable; it does not validate the depicted behavior or its label. MediaPipe pose extraction has not yet been completed.
 
 ## Confirmed repository facts
 
@@ -39,7 +39,7 @@ The CSVs are byte-identical, so they are not independent normal and fall dataset
 
 Do not label `pose_data.csv` as normal data and do not use it as a separate normal class until its source video is confirmed.
 
-## Next actions
+## Video decode verification\n\n| Check | Result |\n|---|---:|\n| Decoded frames | 600 / 600 |\n| Resolution | 3840 x 2160 |\n| FPS | approximately 59.94 |\n| Duration | approximately 10.01 seconds |\n| MediaPipe pose CSV generated | No |\n| Behavioral label independently validated | No |\n\n## Next actions
 
 1. Preserve both original CSV files unchanged.
 2. Extract pose coordinates from the confirmed normal video `test.mp4..mp4` into a new file, e.g. `data/raw/normal/test_normal_pose.csv`.
