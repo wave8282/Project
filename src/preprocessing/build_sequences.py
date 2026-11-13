@@ -168,8 +168,8 @@ def main() -> None:
         "reports": reports,
         "warning": (
             "Do not randomly split overlapping windows. Split by source video using "
-            "the saved groups. At least two independent source videos per class are "
-            "needed for a meaningful video-level train/test evaluation."
+            "the saved groups. The current train/validation/test trainer requires "
+            "at least three independent source videos per class."
         ),
     }
     summary_path = args.output.with_suffix(".summary.json")

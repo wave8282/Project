@@ -2,3 +2,13 @@
 *.h5
 __pycache__/
 .ipynb_checkpoints/
+
+# External datasets and local inference/training outputs
+data/external/urfd/downloads/
+data/external/urfd/videos/
+data/external/omnifall/
+artifacts/
+*.mp4
+*.avi
+*.mov
+*.mkv

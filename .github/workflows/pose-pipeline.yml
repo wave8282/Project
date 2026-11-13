@@ -1,0 +1,118 @@
+name: Pose dataset pipeline
+
+on:
+  push:
+    branches:
+      - feature/pose-dataset-pipeline
+    paths:
+      - "src/preprocessing/extract_pose.py"
+      - "src/preprocessing/build_sequences.py"
+      - "src/preprocessing/engineer_features.py"
+      - "requirements-pose.txt"
+      - "requirements-train.txt"
+      - "docs/DATASET_BUILD.md"
+      - ".github/workflows/pose-pipeline.yml"
+      - ".gitignore"
+      - "fall.mp4"
+      - "test.mp4..mp4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pose-dataset-pipeline
+  cancel-in-progress: false
+
+jobs:
+  extract-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: feature/pose-dataset-pipeline
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: requirements-pose.txt
+
+      - name: Install pose extraction dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-pose.txt
+
+      - name: Run preprocessing and split tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile all Python modules
+        run: python -m compileall -q src tests
+
+      - name: Extract normal video landmarks
+        run: |
+          python src/preprocessing/extract_pose.py \
+            --video "test.mp4..mp4" \
+            --output "data/raw/normal/test_normal_pose.csv" \
+            --overwrite
+
+      - name: Extract fall video landmarks
+        run: |
+          python src/preprocessing/extract_pose.py \
+            --video "fall.mp4" \
+            --output "data/raw/fall/fall_pose.csv" \
+            --overwrite
+
+      - name: Build labeled pose sequences
+        run: |
+          python src/preprocessing/build_sequences.py \
+            --normal "data/raw/normal/test_normal_pose.csv" \
+            --fall "data/raw/fall/fall_pose.csv" \
+            --sequence-length 30 \
+            --output "data/processed/pose_sequences.npz"
+
+      - name: Engineer body-relative temporal features
+        run: |
+          python src/preprocessing/engineer_features.py \
+            --input "data/processed/pose_sequences.npz" \
+            --output "data/processed/pose_features.npz"
+
+      - name: Save extracted data as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pose-dataset-${{ github.run_number }}
+          path: |
+            data/raw/normal/test_normal_pose.csv
+            data/raw/normal/test_normal_pose.metadata.json
+            data/raw/fall/fall_pose.csv
+            data/raw/fall/fall_pose.metadata.json
+            data/processed/pose_sequences.npz
+            data/processed/pose_sequences.summary.json
+            data/processed/pose_features.npz
+            data/processed/pose_features.features.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit generated pose dataset to this feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw/normal/test_normal_pose.csv \
+                  data/raw/normal/test_normal_pose.metadata.json \
+                  data/raw/fall/fall_pose.csv \
+                  data/raw/fall/fall_pose.metadata.json \
+                  data/processed/pose_sequences.npz \
+                  data/processed/pose_sequences.summary.json \
+                  data/processed/pose_features.npz \
+                  data/processed/pose_features.features.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add extracted pose dataset"
+            git fetch origin feature/pose-dataset-pipeline
+            git rebase origin/feature/pose-dataset-pipeline
+            git push origin "HEAD:feature/pose-dataset-pipeline"
+          else
+            echo "Generated dataset is unchanged; no commit needed."
+          fi

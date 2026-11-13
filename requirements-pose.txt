@@ -1,5 +1,5 @@
-# Minimal environment for extracting MediaPipe Pose landmarks.
+# Known-compatible legacy MediaPipe Pose API environment.
 # Recommended Python: 3.10
-numpy>=1.24,<2.0
-opencv-python>=4.8,<5.0
-mediapipe>=0.10.14,<0.11
+numpy==1.26.4
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.21
