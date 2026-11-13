@@ -11,6 +11,7 @@ on:
       - "requirements-train.txt"
       - "docs/DATASET_BUILD.md"
       - ".github/workflows/pose-pipeline.yml"
+      - ".gitignore"
       - "fall.mp4"
       - "test.mp4..mp4"
   workflow_dispatch:
