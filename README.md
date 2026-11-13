@@ -40,3 +40,10 @@ MediaPipe Pose로 영상 속 인체 관절 좌표를 추출하고, 시계열 딥
 ## 현재 개선 작업
 
 상세 점검 결과와 수정 우선순위는 [파이프라인 점검 보고서](docs/PIPELINE_AUDIT.md)를 참고하세요.
+
+### Pose extraction and dataset validation
+
+- Install extraction dependencies with `python -m pip install -r requirements-pose.txt`.
+- Follow [the dataset build guide](docs/DATASET_BUILD.md) to extract separate normal/fall CSVs and build labeled sequences.
+- Run sequence-builder tests with `python -m unittest discover -s tests -v`.
+- Do not randomly split overlapping windows; use the saved source-video groups.
