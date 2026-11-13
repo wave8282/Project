@@ -1,7 +1,8 @@
-"""Extract MediaPipe Pose x/y landmarks from a video.
+"""Extract frame-indexed MediaPipe Pose x/y landmarks from a video.
 
-The CSV keeps the original frame index so missing detections do not silently
-collapse time. Each detected frame contains 33 landmarks (x/y = 66 values).
+The output CSV contains the original frame index plus 33 x/y landmark pairs.
+Frames without a detected pose are omitted, but their absence is represented by
+gaps in frame_index so downstream sequence generation cannot bridge the gap.
 """
 from __future__ import annotations
 
@@ -14,20 +15,49 @@ import cv2
 import mediapipe as mp
 
 
+def build_header() -> list[str]:
+    header = ["frame_index"]
+    for landmark_index in range(33):
+        header.extend([f"lm_{landmark_index:02d}_x", f"lm_{landmark_index:02d}_y"])
+    return header
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--model-complexity", type=int, default=1, choices=(0, 1, 2))
     parser.add_argument("--min-detection-confidence", type=float, default=0.5)
     parser.add_argument("--min-tracking-confidence", type=float, default=0.5)
+    parser.add_argument(
+        "--max-width",
+        type=int,
+        default=1280,
+        help="Resize wider frames to this width for faster processing; use 0 to disable.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Allow replacing an existing CSV and metadata file.",
+    )
     args = parser.parse_args()
 
     if not args.video.is_file():
         raise FileNotFoundError(f"Video not found: {args.video}")
+    if args.max_width < 0:
+        parser.error("--max-width must be 0 or a positive integer")
+    if not 0.0 < args.min_detection_confidence <= 1.0:
+        parser.error("--min-detection-confidence must be in (0, 1]")
+    if not 0.0 < args.min_tracking_confidence <= 1.0:
+        parser.error("--min-tracking-confidence must be in (0, 1]")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     metadata_path = args.output.with_suffix(".metadata.json")
+    if not args.overwrite and (args.output.exists() or metadata_path.exists()):
+        raise FileExistsError(
+            f"Output already exists: {args.output} or {metadata_path}. "
+            "Choose a new path or pass --overwrite."
+        )
 
     capture = cv2.VideoCapture(str(args.video))
     if not capture.isOpened():
@@ -37,14 +67,15 @@ def main() -> None:
     expected_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    if width <= 0 or height <= 0:
+        capture.release()
+        raise RuntimeError(f"Video reports invalid dimensions: {width}x{height}")
 
-    mp_pose = mp.solutions.pose
     processed_frames = 0
     detected_frames = 0
-
-    header = ["frame_index"]
-    for landmark_index in range(33):
-        header.extend([f"lm_{landmark_index:02d}_x", f"lm_{landmark_index:02d}_y"])
+    resized_frames = 0
+    frame_index = 0
+    mp_pose = mp.solutions.pose
 
     try:
         with mp_pose.Pose(
@@ -54,15 +85,25 @@ def main() -> None:
             min_tracking_confidence=args.min_tracking_confidence,
         ) as pose, args.output.open("w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
-            writer.writerow(header)
+            writer.writerow(build_header())
 
-            frame_index = 0
             while True:
                 ok, frame = capture.read()
                 if not ok:
                     break
 
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                inference_frame = frame
+                if args.max_width and frame.shape[1] > args.max_width:
+                    scale = args.max_width / frame.shape[1]
+                    target_height = max(1, round(frame.shape[0] * scale))
+                    inference_frame = cv2.resize(
+                        frame,
+                        (args.max_width, target_height),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                    resized_frames += 1
+
+                rgb = cv2.cvtColor(inference_frame, cv2.COLOR_BGR2RGB)
                 result = pose.process(rgb)
                 processed_frames += 1
 
@@ -84,14 +125,14 @@ def main() -> None:
         "expected_frames": expected_frames,
         "processed_frames": processed_frames,
         "detected_pose_frames": detected_frames,
-        "pose_detection_rate": (
-            detected_frames / processed_frames if processed_frames else 0.0
-        ),
+        "pose_detection_rate": detected_frames / processed_frames if processed_frames else 0.0,
         "width": width,
         "height": height,
         "landmarks_per_frame": 33,
         "coordinates_per_frame": 66,
         "frame_index_preserved": True,
+        "max_inference_width": args.max_width or None,
+        "resized_frames": resized_frames,
         "model_complexity": args.model_complexity,
         "min_detection_confidence": args.min_detection_confidence,
         "min_tracking_confidence": args.min_tracking_confidence,
@@ -100,7 +141,6 @@ def main() -> None:
         json.dumps(metadata, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
 
 
