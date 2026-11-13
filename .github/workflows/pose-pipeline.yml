@@ -48,7 +48,7 @@ jobs:
       - name: Run preprocessing and split tests
         run: python -m unittest discover -s tests -v
 
-      - name: Extract normal video landmarks
+      - name: Compile all Python modules\n        run: python -m compileall -q src tests\n\n      - name: Extract normal video landmarks
         run: |
           python src/preprocessing/extract_pose.py \
             --video "test.mp4..mp4" \
