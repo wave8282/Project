@@ -110,6 +110,8 @@ jobs:
                   data/processed/pose_features.features.json
           if ! git diff --cached --quiet; then
             git commit -m "Add extracted pose dataset"
+            git fetch origin feature/pose-dataset-pipeline
+            git rebase origin/feature/pose-dataset-pipeline
             git push origin "HEAD:feature/pose-dataset-pipeline"
           else
             echo "Generated dataset is unchanged; no commit needed."
