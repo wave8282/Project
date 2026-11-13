@@ -71,5 +71,30 @@ class BuildSequencesTests(unittest.TestCase):
                 load_pose_csv(path)
 
 
+    def test_group_split_keeps_source_videos_disjoint_and_classes_present(self) -> None:
+        from src.training.train_hybrid import split_groups
+
+        groups = np.asarray(
+            ["0:n1"] * 3 + ["0:n2"] * 3 + ["0:n3"] * 3
+            + ["1:f1"] * 3 + ["1:f2"] * 3 + ["1:f3"] * 3
+        )
+        labels = np.asarray([0] * 9 + [1] * 9)
+        train, validation, test = split_groups(labels, groups, seed=7)
+
+        self.assertFalse(set(groups[train]) & set(groups[validation]))
+        self.assertFalse(set(groups[train]) & set(groups[test]))
+        self.assertFalse(set(groups[validation]) & set(groups[test]))
+        for indices in (train, validation, test):
+            self.assertEqual(set(np.unique(labels[indices])), {0, 1})
+
+    def test_group_split_rejects_too_few_source_videos(self) -> None:
+        from src.training.train_hybrid import split_groups
+
+        labels = np.asarray([0] * 10 + [1] * 10)
+        groups = np.asarray(["0:one"] * 10 + ["1:one"] * 10)
+        with self.assertRaisesRegex(ValueError, "at least 3"):
+            split_groups(labels, groups)
+
+
 if __name__ == "__main__":
     unittest.main()
