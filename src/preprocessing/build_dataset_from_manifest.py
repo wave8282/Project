@@ -1,8 +1,7 @@
 """Extract pose and build a multi-video dataset from a reviewed CSV manifest.
 
-Manifest columns: video_path,label,source_id,dataset. Labels must be exactly
-normal or fall. The source_id is retained in output filenames/groups so
-windows from one source video cannot leak across data splits.
+Required columns: video_path,label,source_id,dataset.
+Optional columns: start_frame,end_frame (inclusive, original video frame IDs).
 """
 from __future__ import annotations
 
@@ -38,7 +37,33 @@ def read_manifest(path: Path) -> list[dict[str, str]]:
         if not all(key) or key in seen:
             raise ValueError(f"Empty or duplicate dataset/source_id: {key}")
         seen.add(key)
+        start, end = row.get("start_frame", "").strip(), row.get("end_frame", "").strip()
+        if bool(start) != bool(end):
+            raise ValueError("start_frame and end_frame must either both be set or both be blank")
+        if start:
+            if int(start) < 0 or int(end) < int(start):
+                raise ValueError(f"Invalid inclusive frame range: {start}..{end}")
     return rows
+
+
+def filter_frame_range(source: Path, target: Path, start: int, end: int) -> int:
+    count = 0
+    with source.open("r", encoding="utf-8-sig", newline="") as src:
+        reader = csv.DictReader(src)
+        if not reader.fieldnames or reader.fieldnames[0] != "frame_index":
+            raise ValueError(f"Unexpected pose CSV header in {source}")
+        with target.open("w", encoding="utf-8", newline="") as dst:
+            writer = csv.DictWriter(dst, fieldnames=reader.fieldnames)
+            writer.writeheader()
+            for row in reader:
+                frame_index = int(row["frame_index"])
+                if start <= frame_index <= end:
+                    writer.writerow(row)
+                    count += 1
+    if count == 0:
+        target.unlink(missing_ok=True)
+        raise ValueError(f"No detected pose frames in requested range {start}..{end} for {source}")
+    return count
 
 
 def main() -> None:
@@ -68,7 +93,13 @@ def main() -> None:
         if args.overwrite:
             command.append("--overwrite")
         subprocess.run(command, check=True)
-        outputs[row["label"]].append(output_csv)
+
+        start, end = row.get("start_frame", "").strip(), row.get("end_frame", "").strip()
+        selected_csv = output_csv
+        if start and end:
+            selected_csv = output_csv.with_name(f"{stem}_frames_{start}_{end}_pose.csv")
+            filter_frame_range(output_csv, selected_csv, int(start), int(end))
+        outputs[row["label"]].append(selected_csv)
 
     if not outputs["normal"] or not outputs["fall"]:
         raise ValueError("Manifest must include at least one normal and one fall video")
@@ -87,9 +118,7 @@ def main() -> None:
         "output": str(args.output),
         "X_shape": list(X.shape),
         "class_sequence_counts": {"normal_0": int(np.sum(y == 0)), "fall_1": int(np.sum(y == 1))},
-        "source_video_counts": {
-            "normal": len(outputs["normal"]), "fall": len(outputs["fall"])
-        },
+        "source_video_counts": {"normal": len(outputs["normal"]), "fall": len(outputs["fall"])},
         "reports": reports,
         "note": "Split by source-video groups, never by overlapping windows.",
     }
