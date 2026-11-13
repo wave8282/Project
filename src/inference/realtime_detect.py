@@ -90,7 +90,7 @@ def main() -> None:
                     error = float(np.mean(np.square(features - reconstruction)))
                     is_fall = probability >= 0.5 and error > threshold
                     decisions.append(bool(is_fall))
-                    stable = sum(decisions) >= max(1, int(np.ceil(len(decisions) * 0.6)))
+                    stable = len(decisions) == args.smooth_windows and sum(decisions) >= int(np.ceil(args.smooth_windows * 0.6))
                     consecutive = consecutive + 1 if stable else 0
                     status = (
                         f"FALL CANDIDATE p={probability:.2f} err={error:.4f}"
