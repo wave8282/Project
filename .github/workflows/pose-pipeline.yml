@@ -7,6 +7,7 @@ on:
     paths:
       - "src/preprocessing/extract_pose.py"
       - "src/preprocessing/build_sequences.py"
+      - "src/preprocessing/engineer_features.py"
       - "requirements-pose.txt"
       - "requirements-train.txt"
       - "docs/DATASET_BUILD.md"
@@ -73,6 +74,12 @@ jobs:
             --sequence-length 30 \
             --output "data/processed/pose_sequences.npz"
 
+      - name: Engineer body-relative temporal features
+        run: |
+          python src/preprocessing/engineer_features.py \\
+            --input "data/processed/pose_sequences.npz" \\
+            --output "data/processed/pose_features.npz"
+
       - name: Save extracted data as workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -84,6 +91,8 @@ jobs:
             data/raw/fall/fall_pose.metadata.json
             data/processed/pose_sequences.npz
             data/processed/pose_sequences.summary.json
+            data/processed/pose_features.npz
+            data/processed/pose_features.features.json
           if-no-files-found: error
           retention-days: 30
 
@@ -96,7 +105,9 @@ jobs:
                   data/raw/fall/fall_pose.csv \
                   data/raw/fall/fall_pose.metadata.json \
                   data/processed/pose_sequences.npz \
-                  data/processed/pose_sequences.summary.json
+                  data/processed/pose_sequences.summary.json \\
+                  data/processed/pose_features.npz \\
+                  data/processed/pose_features.features.json
           if ! git diff --cached --quiet; then
             git commit -m "Add extracted pose dataset"
             git push origin "HEAD:feature/pose-dataset-pipeline"
