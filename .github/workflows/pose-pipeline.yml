@@ -76,8 +76,8 @@ jobs:
 
       - name: Engineer body-relative temporal features
         run: |
-          python src/preprocessing/engineer_features.py \\
-            --input "data/processed/pose_sequences.npz" \\
+          python src/preprocessing/engineer_features.py \
+            --input "data/processed/pose_sequences.npz" \
             --output "data/processed/pose_features.npz"
 
       - name: Save extracted data as workflow artifact
@@ -105,8 +105,8 @@ jobs:
                   data/raw/fall/fall_pose.csv \
                   data/raw/fall/fall_pose.metadata.json \
                   data/processed/pose_sequences.npz \
-                  data/processed/pose_sequences.summary.json \\
-                  data/processed/pose_features.npz \\
+                  data/processed/pose_sequences.summary.json \
+                  data/processed/pose_features.npz \
                   data/processed/pose_features.features.json
           if ! git diff --cached --quiet; then
             git commit -m "Add extracted pose dataset"
