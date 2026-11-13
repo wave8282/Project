@@ -1,0 +1,56 @@
+name: Train fall detector
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/pose-dataset-pipeline
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: |
+            requirements-pose.txt
+            requirements-train.txt
+
+      - name: Install training dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-pose.txt
+          python -m pip install -r requirements-train.txt
+
+      - name: Verify feature engineering and dataset split tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build body-relative temporal features
+        run: |
+          python src/preprocessing/engineer_features.py \
+            --input "data/processed/pose_sequences.npz" \
+            --output "data/processed/pose_features.npz"
+
+      - name: Train and evaluate by source video
+        run: |
+          python src/training/train_hybrid.py \
+            --dataset "data/processed/pose_features.npz" \
+            --output-dir "artifacts/fall_detector" \
+            --epochs 50
+
+      - name: Upload trained models and evaluation
+        uses: actions/upload-artifact@v4
+        with:
+          name: fall-detector-models-${{ github.run_number }}
+          path: artifacts/fall_detector/
+          if-no-files-found: error
+          retention-days: 30
