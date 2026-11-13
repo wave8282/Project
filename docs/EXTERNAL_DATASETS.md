@@ -57,6 +57,18 @@ downloaded sequence or derive it from its synchronization metadata. Do not
 silently assume a frame rate. Camera 0 is the common view available for ADL
 and fall sequences.
 
+Generate a draft manifest from the converted folder layout:
+
+```bash
+python src/preprocessing/create_urfd_manifest.py
+```
+
+Review every video and edit `data/external/urfd_manifest.csv`. The generated
+rows are only candidate labels: set inclusive `start_frame` and `end_frame`
+to the event-only segment when the entire video is not one consistent class.
+The importer supports those frame boundaries and keeps each source segment
+separate for video-level splitting.
+
 ### 3. Additional sources through OmniFall
 
 OmniFall lists UP-Fall (permission-based), Le2i (CC-BY-NC-SA 3.0),
