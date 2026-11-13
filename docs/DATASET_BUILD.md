@@ -5,17 +5,27 @@ Autoencoder experiments.
 
 ## 1. Extract each source video separately
 
-Run from the repository root in an environment with OpenCV and MediaPipe
-installed:
+Use Python 3.10 from the repository root. Install the dedicated extraction
+dependencies:
+
+```bash
+python -m pip install -r requirements-pose.txt
+```
+
+The project owner has confirmed `test.mp4..mp4` as the normal-behavior video
+and `fall.mp4` as an actual fall video. The extractor downsizes 4K frames to
+a maximum inference width of 1280 pixels by default to reduce processing cost;
+normalized x/y landmark coordinates remain compatible with the 66-feature
+model input. It processes every frame and preserves original frame indices.
 
 ```bash
 python src/preprocessing/extract_pose.py --video "test.mp4..mp4" --output "data/raw/normal/test_normal_pose.csv"
 python src/preprocessing/extract_pose.py --video "fall.mp4" --output "data/raw/fall/fall_pose.csv"
 ```
 
-The project owner has identified `test.mp4..mp4` as the normal-behavior source.
-The legacy `test.py` reads `fall.mp4`, but its contents and suitability as a
-fall-labeled source must be visually confirmed before using it as ground truth.
+The extractor refuses to overwrite existing outputs unless `--overwrite` is
+explicitly supplied. Each CSV is accompanied by a metadata JSON containing
+frame counts, pose detection rate, original dimensions, and inference settings.
 
 The extractor writes a CSV with 67 columns: the original frame index followed
 by 66 normalized x/y landmark coordinates. It also writes a metadata JSON file.
