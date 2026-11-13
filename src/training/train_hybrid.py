@@ -101,7 +101,7 @@ def build_models(sequence_length: int, feature_count: int):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", type=Path, default=Path("data/processed/pose_sequences.npz"))
+    parser.add_argument("--dataset", type=Path, default=Path("data/processed/pose_features.npz"))
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/fall_detector"))
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -125,6 +125,8 @@ def main() -> None:
 
     if X.ndim != 3 or X.shape[0] != len(y) or len(y) != len(groups):
         raise ValueError("Invalid dataset dimensions")
+    if X.shape[2] != 137:
+        raise ValueError(f"Expected engineered 137-feature input; got {X.shape[2]}. Run engineer_features.py first.")
     if not np.all(np.isfinite(X)):
         raise ValueError("X contains NaN or infinite values")
     if set(np.unique(y).tolist()) != {0, 1}:
@@ -180,6 +182,8 @@ def main() -> None:
 
     y_test = y[test_idx]
     metrics = {
+        "input_features": int(X.shape[2]),
+        "sequence_length": int(X.shape[1]),
         "test_sequences": int(len(test_idx)),
         "test_source_videos": sorted(np.unique(groups[test_idx]).tolist()),
         "classifier": {
