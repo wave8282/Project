@@ -41,7 +41,10 @@ def inspect_csv(path: Path) -> dict:
             else:
                 seen.add(key)
 
-            for value in row:
+            # New extractor format: frame_index + 66 landmark coordinates.
+            # Legacy CSV format: 66 landmark coordinates without frame_index.
+            coordinate_values = row[1:] if len(row) == 67 else row
+            for value in coordinate_values:
                 try:
                     number = float(value)
                 except ValueError:
