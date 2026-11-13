@@ -47,3 +47,6 @@ MediaPipe Pose로 영상 속 인체 관절 좌표를 추출하고, 시계열 딥
 - Follow [the dataset build guide](docs/DATASET_BUILD.md) to extract separate normal/fall CSVs and build labeled sequences.
 - Run sequence-builder tests with `python -m unittest discover -s tests -v`.
 - Do not randomly split overlapping windows; use the saved source-video groups.
+
+- Install model dependencies with `python -m pip install -r requirements-train.txt`.
+- Train/evaluate the leakage-safe hybrid model with `python src/training/train_hybrid.py` after reviewing the generated NPZ dataset.
