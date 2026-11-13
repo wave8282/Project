@@ -62,5 +62,6 @@ generalization performance.
 - It does not train models. Training starts only after the generated dataset
   and source labels have been reviewed.
 - The 66 x/y coordinates are retained for compatibility with the existing
-  model input shape. Visibility, z coordinates, body-relative normalization,
-  and camera-motion robustness remain future improvements.
+  model input shape. Finite coordinates outside [0, 1] are preserved because
+  MediaPipe landmarks can lie beyond the image boundary. Visibility, z coordinates,
+  body-relative normalization, and camera-motion robustness remain future improvements.
