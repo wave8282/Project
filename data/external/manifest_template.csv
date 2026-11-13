@@ -1,4 +1,1 @@
-video_path,label,source_id,dataset
-# Example only: replace paths and identifiers with reviewed local clips
-# data/external/urfd/videos/fall/urfd_fall_01_cam0.mp4,fall,fall_01,URFD
-# data/external/urfd/videos/normal/urfd_adl_01_cam0.mp4,normal,adl_01,URFD
+video_path,label,source_id,dataset,start_frame,end_frame
