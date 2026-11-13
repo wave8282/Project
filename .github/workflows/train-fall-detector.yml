@@ -26,15 +26,12 @@ jobs:
         with:
           python-version: "3.10"
           cache: pip
-          cache-dependency-path: |
-            requirements-pose.txt
-            requirements-train.txt
+          cache-dependency-path: requirements-pose.txt
 
-      - name: Install training dependencies
+      - name: Install pose/data dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-pose.txt
-          python -m pip install -r requirements-train.txt
 
       - name: Verify feature engineering and dataset split tests
         run: python -m unittest discover -s tests -v
@@ -45,14 +42,43 @@ jobs:
             --input "data/processed/pose_sequences.npz" \
             --output "data/processed/pose_features.npz"
 
+      - name: Check independent source-video counts
+        id: readiness
+        run: |
+          python - <<'PY'
+          import os
+          import numpy as np
+          with np.load("data/processed/pose_sequences.npz", allow_pickle=False) as data:
+              y = data["y"]
+              groups = data["groups"].astype(str)
+          counts = {int(label): int(len(np.unique(groups[y == label]))) for label in np.unique(y)}
+          ready = all(counts.get(label, 0) >= 3 for label in (0, 1))
+          print(f"Independent source videos by label: {counts}")
+          print("Training readiness:", ready)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"ready={'true' if ready else 'false'}\n")
+          PY
+
+      - name: Install model-training dependencies
+        if: steps.readiness.outputs.ready == 'true'
+        run: python -m pip install -r requirements-train.txt
+
       - name: Train and evaluate by source video
+        if: steps.readiness.outputs.ready == 'true'
         run: |
           python src/training/train_hybrid.py \
             --dataset "data/processed/pose_features.npz" \
             --output-dir "artifacts/fall_detector" \
             --epochs 50
 
+      - name: Explain why training was skipped
+        if: steps.readiness.outputs.ready != 'true'
+        run: |
+          echo "Training skipped safely: collect at least three independent normal videos and three independent fall videos."
+          echo "No model metrics were generated from overlapping windows of the same source video."
+
       - name: Upload trained models and evaluation
+        if: steps.readiness.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: fall-detector-models-${{ github.run_number }}
