@@ -62,9 +62,10 @@ def load_pose_csv(path: Path) -> tuple[np.ndarray, np.ndarray]:
     if np.any(np.diff(frame_indices) <= 0):
         raise ValueError(f"{path}: frame_index must be strictly increasing")
 
+    # MediaPipe x/y values are normalized by image dimensions, but landmarks
+    # outside the image can legitimately be below 0 or above 1. Preserve them;
+    # reject only non-finite values rather than silently clipping coordinates.
     coordinates = values[:, 1:]
-    if np.any(coordinates < 0) or np.any(coordinates > 1):
-        raise ValueError(f"{path}: coordinates outside normalized [0, 1] range")
     return frame_indices, coordinates.astype(np.float32)
 
 
