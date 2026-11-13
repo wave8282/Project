@@ -52,13 +52,15 @@ jobs:
         run: |
           python src/preprocessing/extract_pose.py \
             --video "test.mp4..mp4" \
-            --output "data/raw/normal/test_normal_pose.csv"
+            --output "data/raw/normal/test_normal_pose.csv" \\
+            --overwrite
 
       - name: Extract fall video landmarks
         run: |
           python src/preprocessing/extract_pose.py \
             --video "fall.mp4" \
-            --output "data/raw/fall/fall_pose.csv"
+            --output "data/raw/fall/fall_pose.csv" \\
+            --overwrite
 
       - name: Build labeled pose sequences
         run: |
