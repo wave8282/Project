@@ -1,0 +1,25 @@
+{
+  "input": "data/processed/pose_sequences.npz",
+  "output": "data/processed/pose_features.npz",
+  "raw_shape": [
+    1006,
+    30,
+    66
+  ],
+  "feature_shape": [
+    1006,
+    30,
+    137
+  ],
+  "feature_count": 137,
+  "feature_layout": {
+    "0:66": "hip-centered and torso-scale-normalized x/y landmarks",
+    "66:132": "per-frame first differences of normalized landmarks",
+    "132:137": "hip center x/y, log torso scale, torso angle sin/cos"
+  },
+  "source_videos": 2,
+  "label_counts": {
+    "0": 509,
+    "1": 497
+  }
+}
