@@ -1,0 +1,21 @@
+{
+  "source_filename": "test.mp4..mp4",
+  "intended_role": "normal_behavior_source_as_identified_by_project_owner",
+  "inspection": {
+    "decoder": "OpenCV",
+    "opencv_version": "4.13.0",
+    "opened": true,
+    "width": 3840,
+    "height": 2160,
+    "fps": 59.94005994005994,
+    "declared_frames": 600,
+    "decoded_frames": 600,
+    "duration_seconds": 10.01
+  },
+  "pose_extraction": {
+    "attempted": false,
+    "reason": "MediaPipe is not installed in the current execution environment",
+    "csv_generated": false
+  },
+  "label_validation": "not_performed"
+}
