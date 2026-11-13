@@ -58,5 +58,5 @@ MediaPipe Pose로 영상 속 인체 관절 좌표를 추출하고, 시계열 딥
 - Convert downloaded URFD cam0 RGB ZIP archives: `python src/preprocessing/prepare_urfd.py --source-dir data/external/urfd/downloads --fps <verified_fps>`.
 - Prepare a reviewed multi-video CSV manifest using [data/external/manifest_template.csv](data/external/manifest_template.csv), then run `python src/preprocessing/build_dataset_from_manifest.py --manifest data/external/my_manifest.csv`.
 - Generate body-relative temporal features: `python src/preprocessing/engineer_features.py`.
-- Train/evaluate by source video with the manual GitHub Actions workflow **Train fall detector** or `python src/training/train_hybrid.py`.
+- Train/evaluate by source video with the GitHub Actions workflow **Train fall detector** or `python src/training/train_hybrid.py`. The workflow skips model fitting until at least three independent source videos per class are present.
 - Experimental camera/video inference: [docs/REALTIME_INFERENCE.md](docs/REALTIME_INFERENCE.md).
