@@ -1,6 +1,11 @@
 name: Train fall detector
 
 on:
+  push:
+    branches:
+      - feature/pose-dataset-pipeline
+    paths:
+      - "data/processed/pose_sequences.npz"
   workflow_dispatch:
 
 permissions:
