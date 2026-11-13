@@ -5,9 +5,8 @@ on:
     branches:
       - feature/pose-dataset-pipeline
     paths:
-      - "src/preprocessing/**"
-      - "src/training/**"
-      - "tests/**"
+      - "src/preprocessing/extract_pose.py"
+      - "src/preprocessing/build_sequences.py"
       - "requirements-pose.txt"
       - "requirements-train.txt"
       - "docs/DATASET_BUILD.md"
