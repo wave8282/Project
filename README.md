@@ -50,3 +50,4 @@ MediaPipe Pose로 영상 속 인체 관절 좌표를 추출하고, 시계열 딥
 
 - Install model dependencies with `python -m pip install -r requirements-train.txt`.
 - Train/evaluate the leakage-safe hybrid model with `python src/training/train_hybrid.py` after reviewing the generated NPZ dataset.
+- See [verified pose extraction results](docs/EXTRACTION_RESULTS.md) for actual detection rates, continuity checks, and dataset counts.
